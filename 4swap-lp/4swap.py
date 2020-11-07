@@ -8,8 +8,10 @@ class FswapQuant(object):
         self.debug = debug
         self.bigone = BigONE(debug)
         self.candles = self.bigone.read_candles(symbol, days)
-        if self.candles is None or len(self.candles) == 0:
+        if self.candles is None or len(self.candles) < 2:
             return
+
+        self.candles = self.candles[:-1]
 
         ohlc = self.backtest_ohlc()
         print("backtest: OPEN => HIGH => LOW => CLOSE")
@@ -24,6 +26,10 @@ class FswapQuant(object):
         open_price = swapper.quote_open / swapper.base_open
         close_price = swapper.price()
         price_change = (close_price - open_price) / open_price
+        lp_base_close = swapper.base * 2
+        lp_base_ref = swapper.base_open + swapper.quote / close_price
+        lp_quote_close = swapper.quote * 2
+        lp_quote_ref = swapper.quote_open + swapper.base * close_price
 
         print("open price: %f" % open_price)
         print("close price: %f" % close_price)
@@ -32,6 +38,10 @@ class FswapQuant(object):
         print("close base: %f" % swapper.base)
         print("close quote: %f" % swapper.quote)
         print("price change: %.4f%%" % (price_change * 100))
+        print("lp profit base: %.4f%%" %
+              ((lp_base_close - lp_base_ref) / lp_base_ref * 100))
+        print("lp profit quote: %.4f%%" %
+              ((lp_quote_close - lp_quote_ref) / lp_quote_ref * 100))
         print("profit: %.4f%%" % (swapper.profit()*100))
 
     def backtest_ohlc(self, times=1):
